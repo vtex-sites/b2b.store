@@ -117,11 +117,7 @@ this monorepo scenario.
 - **`contentSource.type: "CP"`** is the current official scaffold default;
   its interaction with the legacy VTEX Headless CMS webhook flow
   (`vtexHeadlessCms.webhookUrls`) has not been validated end-to-end.
-- **Not validated against a live VTEX B2B account** — build success (see
-  below) only confirms the config/dependency graph resolves and compiles; it
-  does not confirm the Buyer Portal plugin behaves correctly against a real
-  account, since that requires the account prerequisites above to be in
-  place first.
+- **Not validated against a live VTEX B2B account** — `yarn build` currently fails in the default state: TypeScript and webpack compile successfully, but prerendering `/checkout` fails with HTTP 400 because the `{ACCOUNT_NAME}` placeholder cannot resolve a real backend. Replacing this placeholder with a provisioned VTEX account (per Setup above) is expected to resolve this. The failure does not confirm whether Buyer Portal behaves correctly against a real account — that requires the prerequisites above.
 - **Never commit `secrets.hidden.json` / `secrets.revealed.json`** — both are
   excluded in `.gitignore`. A sibling reference repo currently has
   `secrets.hidden.json` tracked in git; do not repeat that mistake here.
