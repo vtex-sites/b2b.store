@@ -1,12 +1,12 @@
 module.exports = {
   contentSource: {
-    type: 'CP',
+    type: "CP",
   },
   seo: {
-    title: "FastStore",
-    description: "A fast and performant store framework",
-    titleTemplate: "%s | FastStore",
-    author: "FastStore",
+    title: "B2B FastStore",
+    description: "A fast and performant B2B store framework",
+    titleTemplate: "%s | B2B FastStore",
+    author: "VTEX",
   },
 
   // Theming
@@ -15,9 +15,13 @@ module.exports = {
   // Ecommerce Platform
   platform: "vtex",
 
+  // Plugins
+  plugins: ["@vtex/faststore-plugin-buyer-portal"],
+
   // Platform specific configs for API
+  // {ACCOUNT_NAME} must be replaced with the target VTEX account name — see README "Setup" section
   api: {
-    storeId: "newstore",
+    storeId: "{ACCOUNT_NAME}",
     workspace: "master",
     environment: "vtexcommercestable",
     hideUnavailableItems: true,
@@ -27,12 +31,12 @@ module.exports = {
   // Default session
   session: {
     currency: {
-      code: "BRL",
-      symbol: "R$",
+      code: "USD",
+      symbol: "$",
     },
-    locale: "pt-BR",
+    locale: "en-US",
     channel: '{"salesChannel":"1","regionId":""}',
-    country: "BRA",
+    country: "USA",
     deliveryMode: null,
     addressType: null,
     postalCode: null,
@@ -47,18 +51,18 @@ module.exports = {
     shouldSplitItem: true,
   },
 
-  // Production URLs
-  storeUrl: "https://www.fast.store",
-  secureSubdomain: "https://www.fast.store/",
-  checkoutUrl: "https://www.fast.store/checkout",
-  loginUrl: "https://www.fast.store/api/io/login",
-  accountUrl: "https://www.fast.store/api/io/account",
+  // Production URLs — replace {ACCOUNT_NAME} with the target VTEX account/store domain. See README "Setup" section.
+  storeUrl: "https://{ACCOUNT_NAME}.vtexfaststore.com",
+  secureSubdomain: "https://{ACCOUNT_NAME}.vtexfaststore.com",
+  checkoutUrl: "https://{ACCOUNT_NAME}.vtexfaststore.com/checkout",
+  loginUrl: "https://{ACCOUNT_NAME}.vtexfaststore.com/api/io/login",
+  accountUrl: "https://{ACCOUNT_NAME}.vtexfaststore.com/api/io/account",
 
   previewRedirects: {
     home: "/",
-    plp: "/headphones",
-    search: "/s?q=Newstore",
-    pdp: "/headphone-white-10000006/p",
+    plp: "/office",
+    search: "/s?q=headphone",
+    pdp: "/apple-magic-mouse/p",
   },
 
   // Lighthouse CI
@@ -66,8 +70,8 @@ module.exports = {
     server: process.env.BASE_SITE_URL || "http://localhost:3000",
     pages: {
       home: "/",
-      pdp: "/headphone-white-10000006/p",
-      collection: "/headphones",
+      pdp: "/apple-magic-mouse/p",
+      collection: "/office",
     },
   },
 
@@ -75,28 +79,34 @@ module.exports = {
   cypress: {
     pages: {
       home: "/",
-      pdp: "/headphone-white-10000006/p",
-      collection: "/headphones",
+      pdp: "/apple-magic-mouse/p",
+      collection: "/office",
       collection_filtered:
-        "/headphones?category-1=headphones&fuzzy=0&operator=and&facets=category-1%2Cfuzzy%2Coperator&sort=score_desc&page=0",
-      search: "/s?q=Newstore",
+        "/office/?category-1=office&facets=category-1",
+      search: "/s?q=headphone",
     },
     browser: "electron",
   },
 
   analytics: {
-    // https://developers.google.com/tag-platform/tag-manager/web#standard_web_page_installation,
-    gtmContainerId: "GTM-1234567",
+    gtmContainerId: "",
   },
 
+  // Note: nodeVersion 24 and refreshToken:false match the currently-running
+  // b2bfaststoredev.store reference account. The internal guideline v1.4
+  // documents nodeVersion:20 and refreshToken:true — those are stale; verify
+  // refreshToken behavior with the Identity team before flipping it (see README limitations).
   experimental: {
     nodeVersion: 24,
     cypressVersion: 12,
-    enableFaststoreMyAccount: false,
-    optimizedFonts: true, 
+    enableFaststoreMyAccount: true,
+    refreshToken: false,
   },
 
+  // {ACCOUNT_NAME} must use the .myvtex.com domain, NOT the storefront domain
   vtexHeadlessCms: {
-    webhookUrls: ["https://newstore.myvtex.com/cms-releases/webhook-releases"],
+    webhookUrls: [
+      "https://{ACCOUNT_NAME}.myvtex.com/cms-releases/webhook-releases",
+    ],
   },
 };
