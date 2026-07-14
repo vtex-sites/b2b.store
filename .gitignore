@@ -38,3 +38,7 @@ yarn-error.log*
 /.faststore
 .vscode/
 lighthouserc.js
+
+# secrets — never commit account credentials
+secrets.hidden.json
+secrets.revealed.json
