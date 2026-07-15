@@ -1,0 +1,33 @@
+{
+  "name": "b2b.store",
+  "version": "0.1.0",
+  "description": "FastStore B2B Template — starter.store + Buyer Portal plugin",
+  "private": true,
+  "scripts": {
+    "dev": "faststore dev",
+    "build": "faststore build",
+    "start": "faststore start",
+    "cms-sync": "faststore cms-sync",
+    "test": "faststore test",
+    "test-plugin": "cypress open --config-file node_modules/@vtex/faststore-plugin-buyer-portal/cypress.config.ts",
+    "test-plugin:ci": "cypress run --config-file node_modules/@vtex/faststore-plugin-buyer-portal/cypress.config.ts"
+  },
+  "dependencies": {
+    "@faststore/cli": "^4.4.0",
+    "@vtex/faststore-plugin-buyer-portal": "^2.0.9",
+    "graphql": "^16.11.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@cypress/code-coverage": "^3.12.1",
+    "@lhci/cli": "^0.9.0",
+    "@testing-library/cypress": "^10.0.1",
+    "cypress": "^13.0.0",
+    "cypress-axe": "^1.5.0",
+    "cypress-wait-until": "^2.0.1",
+    "typescript": "^5.9.3"
+  },
+  "author": "VTEX",
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}

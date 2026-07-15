@@ -1,0 +1,15 @@
+{
+  "$schema": "https://unpkg.com/@vtex/fsp-config/faststore.schema.json",
+  "stores": {
+    "{ACCOUNT_NAME}": {
+      "discovery": {
+        "path": "packages/discovery",
+        "port": 3001
+      },
+      "checkout": {
+        "path": "packages/checkout",
+        "port": 3002
+      }
+    }
+  }
+}

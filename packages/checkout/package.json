@@ -1,0 +1,12 @@
+{
+  "name": "checkout",
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "^18",
+    "typescript": "^5"
+  },
+  "devDependencies": {
+    "@types/react": "^18",
+    "@types/css-modules": "^1.0.5"
+  }
+}
