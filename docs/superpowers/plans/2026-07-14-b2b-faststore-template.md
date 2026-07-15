@@ -554,3 +554,98 @@ Copy the relevant lines of `/tmp/b2b-store-build.log` (success confirmation, or 
 
 - **Spec coverage:** plugin dependency (Task 2) ✓, `discovery.config.js` guideline fields (Task 3) ✓, README with prerequisites/limitations (Task 5) ✓, build evidence (Task 6) ✓, monorepo/FastCheckout workaround documented-not-built per user direction (README) ✓, secrets hygiene fix (Task 6) ✓.
 - **Explicitly out of scope per user/ticket direction:** `faststore-cloud` onboarding changes, `myAccount`/`SelfManagementRouter`/`pages/pvt`/`components/overrides` (confirmed not template-relevant), CMS content, FastCheckout implementation.
+
+---
+
+## Addendum (2026-07-15): Monorepo + FastCheckout pivot
+
+**Why:** after the single-package template above shipped, Cleber Alves (EM,
+B2B Enabler) and the ticket owner discussed FastCheckout support directly in
+Slack and decided the template should ship with FastCheckout included by
+default rather than as a documented manual workaround — reasoning: "é melhor
+ter e não precisar do que precisar e não ter" (better to have it and not need
+it than need it and not have it), with validation with product (Petrus)
+pending. This reverses this plan's original Architecture decision (single
+package, FastCheckout as optional documented extension).
+
+**What changed, mechanically:**
+1. Ran the official `@vtex/fsp-cli` migration instead of hand-rolling the
+   monorepo structure: `fsp init --from-discovery` (moves the existing
+   single-package template into `packages/discovery`, generates root
+   `package.json` + `turbo.json` + `faststore.json`), then
+   `fsp create {ACCOUNT_NAME} checkout packages/checkout` (scaffolds the
+   FastCheckout module via `@vtex/checkout`'s `defineExtensions`).
+2. Manually re-added the `nohoist` entry for
+   `@vtex/faststore-plugin-buyer-portal` to root `package.json` — `fsp init`
+   does not add this itself; it's the same guideline v1.4 workaround this
+   plan originally described as a manual, optional step.
+3. Manually pinned `packageManager` to the full yarn hash (the CLI only wrote
+   the bare version) for consistency with the rest of the template.
+4. Removed the demo `HelloWorld` extension `fsp create` scaffolds by default,
+   replacing `packages/checkout/src/index.tsx` with an empty
+   `defineExtensions({})` — same "no demo content" constraint as the original
+   Task 4.
+5. Relocated `docs/` and `.superpowers/` back to the repo root (the migration
+   moved everything not explicitly kept into `packages/discovery`); moved the
+   main `README.md` to repo root (now documents the whole monorepo, not just
+   discovery) and left a one-line pointer README in `packages/discovery`.
+6. Rewrote `README.md` throughout: "What's included"/"What's NOT included",
+   Setup steps (per-package ports 3001/3002, root-level `yarn dev`/`yarn
+   build` via Turborepo), a new "Monorepo structure" section replacing the
+   old "Monorepo + FastCheckout (optional, not built)" section, and two new
+   Known Limitations bullets (FastCheckout unvalidated against a real
+   account; the `fsp init --from-discovery` account-name auto-detection
+   gotcha, below).
+
+**New gotcha found during migration (important — document, don't silently
+fix):** `fsp init --from-discovery` reads the locally logged-in VTEX account
+via VTEX Toolbelt and can silently overwrite the `{ACCOUNT_NAME}` placeholder
+in `discovery.config.js` (`api.storeId`) and `faststore.json` (the `stores`
+key) with that real, machine-local account name instead of preserving the
+placeholder. This was caught in a disposable scratch-copy test run before
+touching the real repo — always verify both files still say `{ACCOUNT_NAME}`
+after running this migration, on any machine.
+
+**Not re-litigated:** the original Task 1–6 single-package work is not
+reverted or invalidated — this addendum documents the structural migration
+applied on top of it, on the same branch, informed by a real product/eng
+decision made after the original plan was written.
+
+**Three real dependency-hoisting bugs found and fixed via `yarn build`
+verification, all independent of the `{ACCOUNT_NAME}` placeholder issue (in
+order of discovery):**
+
+1. `next build --webpack: error: unknown option '--webpack'` — root cause:
+   `@vtex/checkout` pulls in `@vtex/checkout-ui-core`, which bundles its own
+   Next.js 14; yarn hoisted THAT `next` binary to the workspace root
+   `node_modules/.bin/next`, shadowing the Next.js 16 that
+   `@faststore/cli`/`@faststore/core` require. Fixed by adding
+   `**/@vtex/checkout-ui-core` + `**/@vtex/checkout-ui-core/**` to root
+   `package.json`'s `nohoist`.
+2. `Cannot find module 'autoprefixer'` — root cause: `@faststore/core` needs
+   `autoprefixer ^10`, but `@vtex/sales-app`'s transitive dependency
+   `draftjs-to-html` needs `^9`; the conflict left yarn unable to hoist
+   either copy to root. Fixed with `resolutions.autoprefixer: "^10.4.0"`
+   *and* an explicit `autoprefixer` root `devDependency` — the resolutions
+   pin alone did not make yarn hoist a copy to root; an explicit top-level
+   dependency was required in addition.
+3. `TypeError: Cannot read properties of null (reading 'useEffect')` during
+   static prerendering of an unrelated page (`/password-protection`) — root
+   cause: even after pinning `resolutions.react`/`resolutions.react-dom` to
+   `^18.3.1`, yarn classic still physically duplicated React under
+   `packages/discovery/node_modules` (identical version, but a second module
+   instance — enough to break React's internals when two copies render in
+   the same tree). Fixed with a root `postinstall` script:
+   `rm -rf packages/discovery/node_modules/react packages/discovery/node_modules/react-dom`
+   — Node's module resolution then walks up to the single deduped copy at
+   the workspace root.
+
+After all three fixes, `yarn build` reaches the exact same class of failure
+as the original single-package build: an account-dependent page (observed on
+`/checkout`, `/404`, and `/500` across different runs — not deterministically
+the same page, since which page a build worker reaches first varies) fails
+prerendering with HTTP 400 against the unresolved `{ACCOUNT_NAME}` placeholder
+domain. This confirms the monorepo + FastCheckout integration itself is
+sound; the only remaining failure is the same pre-existing, accepted,
+documented limitation from the original plan (needs a real provisioned VTEX
+account to fully build).

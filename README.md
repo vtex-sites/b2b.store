@@ -1,38 +1,58 @@
 # b2b.store
 
-A FastStore B2B template — the official `starter.store` base plus the
+A FastStore B2B template — a monorepo with the official `starter.store`
+discovery base plus the
 [`@vtex/faststore-plugin-buyer-portal`](https://github.com/vtex/faststore-plugin-buyer-portal)
-plugin and the VTEX B2B guideline configuration pre-wired in.
+plugin, the VTEX B2B guideline configuration, and a FastCheckout module,
+pre-wired in.
 
 Built from ticket **B2BTEAM-3645**. Status: **beta / partial validation** —
 see [Known limitations](#known-limitations) below.
 
 ## What's included
 
-- `@faststore/cli` `^4.4.0`, `@vtex/faststore-plugin-buyer-portal` `^2.0.9`
+- Monorepo layout (Turborepo): `packages/discovery` (storefront) +
+  `packages/checkout` (FastCheckout customizations), wired together via
+  `faststore.json`.
+- `@faststore/cli` `^4.4.0`, `@vtex/faststore-plugin-buyer-portal` `^2.0.9` in
+  `packages/discovery`.
 - `discovery.config.js` with the plugin registered and B2B-oriented defaults
-  (`hideUnavailableItems: true`, `enableFaststoreMyAccount: true`)
-- Cypress test scripts wired to the plugin's own test suite (`yarn test-plugin`)
+  (`hideUnavailableItems: true`, `enableFaststoreMyAccount: true`).
+- FastCheckout scaffolded in `packages/checkout` (via `@vtex/checkout`'s
+  `defineExtensions`) with no example/demo extension — add your own
+  customizations there.
+- Root `package.json` has the `nohoist` workaround already applied for
+  `@vtex/faststore-plugin-buyer-portal`, required for this monorepo layout.
+- Cypress test scripts wired to the plugin's own test suite (`yarn test-plugin`
+  inside `packages/discovery`).
 
 ## What's NOT included (by design — kept lean)
 
-- No monorepo / FastCheckout packages. If your project needs FastCheckout in
-  the same repo, see the "Monorepo + FastCheckout" section below for the
-  `nohoist` workaround from the internal guideline (v1.4) — apply it manually.
 - No CMS content (`cms/` folder), no custom `src/` overrides beyond the
-  framework defaults (`themes/`, `fonts/`) — add your store's own sections,
-  components, and theme tokens in `src/` per `AGENTS.md`.
+  framework defaults (`themes/`, `fonts/`) in `packages/discovery` — add your
+  store's own sections, components, and theme tokens there per
+  `packages/discovery/AGENTS.md`.
+- No example FastCheckout extensions — `packages/checkout/src/index.tsx`
+  ships with an empty `defineExtensions({})`.
 
 ## Setup
 
-1. Replace every `{ACCOUNT_NAME}` placeholder in `discovery.config.js` with
-   your target VTEX account name (used for `storeUrl`, `secureSubdomain`,
-   `checkoutUrl`, `loginUrl`, `accountUrl`) and your account's `.myvtex.com`
-   domain (used for `vtexHeadlessCms.webhookUrls` — this one is NOT the
-   storefront domain).
-2. Install dependencies: `yarn install`
-3. Run locally: `yarn dev` (http://localhost:3000)
+1. Replace every `{ACCOUNT_NAME}` placeholder with your target VTEX account
+   name:
+   - `packages/discovery/discovery.config.js` — `api.storeId`, `storeUrl`,
+     `secureSubdomain`, `checkoutUrl`, `loginUrl`, `accountUrl`, and
+     `vtexHeadlessCms.webhookUrls` (this last one uses the account's
+     `.myvtex.com` domain, NOT the storefront domain).
+   - `faststore.json` (repo root) — the top-level `stores` key.
+2. Install dependencies from the repo root: `yarn install`
+3. Run locally (both discovery and checkout, via Turborepo): `yarn dev`
+   - Discovery: http://localhost:3001
+   - Checkout: http://localhost:3002
 4. Production build: `yarn build`
+
+Each package can also be run individually from inside
+`packages/discovery` or `packages/checkout` using their own `yarn dev` /
+`yarn build` scripts.
 
 ## Account prerequisites (not part of this repo — configure manually)
 
@@ -79,30 +99,66 @@ behavior.
   after the store is running)
 - Card tokenization (`allow-card-tokenization-by-account`,
   `allow-tokenization-deploy`)
-- FastCheckout — only supported in the US region (Commercial Policy) today
+- **FastCheckout is scaffolded in this template, but it is only supported in
+  the US region today (VTEX Commercial Policy)** — accounts outside that
+  region can leave `packages/checkout` unused/unconfigured; the monorepo
+  structure itself doesn't require FastCheckout to be active.
 - Masterdata: the `addressType` field must be searchable/indexable on the `AD`
   table
 - Contract Management admin permissions (View/Edit Contracts)
 
-## Monorepo + FastCheckout (optional, not built into this template)
+## Monorepo structure
 
-If your project also needs FastCheckout in the same repo
-(`packages/discovery` + `packages/checkout`), apply this workaround from the
-internal B2B guideline manually:
+This template was migrated from a single-package `starter.store` layout to a
+monorepo using the official `@vtex/fsp-cli` tooling
+(`fsp init --from-discovery` to create `packages/discovery`, then
+`fsp create {ACCOUNT_NAME} checkout packages/checkout` to add the FastCheckout
+module). Root-level files:
 
-Root `package.json`:
-```json
-"workspaces": {
-  "packages": ["packages/*"],
-  "nohoist": [
-    "**/@vtex/faststore-plugin-buyer-portal",
-    "**/@vtex/faststore-plugin-buyer-portal/**"
-  ]
-}
-```
+- `faststore.json` — maps each package (`discovery`, `checkout`) to its path
+  and local dev port, keyed by `{ACCOUNT_NAME}`.
+- `turbo.json` — Turborepo pipeline (`build`, `dev`).
+- `package.json` — workspaces + the `nohoist` entry for
+  `@vtex/faststore-plugin-buyer-portal` (required so the plugin isn't hoisted
+  in a way that breaks its own resolution — this is a known FastStore
+  monorepo workaround, remove it once FastStore supports this scenario
+  natively).
 
-This is a temporary workaround — remove it once FastStore natively supports
-this monorepo scenario.
+**Caveat found during migration:** `fsp init --from-discovery` reads the
+locally logged-in VTEX account (via VTEX Toolbelt) and may silently replace
+the `{ACCOUNT_NAME}` placeholder with that real account name in
+`discovery.config.js` and `faststore.json` instead of preserving the
+placeholder. If you re-run this migration yourself, verify both files still
+say `{ACCOUNT_NAME}` afterward — don't assume the placeholder survived.
+
+**Dependency conflicts found and fixed while adding FastCheckout to the same
+workspace** (all in root `package.json`, needed for `yarn build`/`yarn dev` to
+work at all — independent of the `{ACCOUNT_NAME}` placeholder issue below):
+
+- `**/@vtex/checkout-ui-core` and `**/@vtex/checkout-ui-core/**` were added to
+  `nohoist`. Without this, yarn hoists `@vtex/checkout-ui-core`'s bundled
+  Next.js 14 to the workspace root `node_modules/.bin/next`, shadowing the
+  Next.js 16 that `@faststore/cli`/`@faststore/core` require — the build then
+  fails immediately with `next build: error: unknown option '--webpack'`
+  (a flag that only exists on the newer Next.js version).
+- `resolutions.autoprefixer` is pinned to `^10.4.0`. `@faststore/core` needs
+  `autoprefixer ^10`, but a transitive dependency of `@vtex/sales-app`
+  (`draftjs-to-html`) needs `^9` — the version conflict means yarn can't
+  hoist either copy to root, so Next.js's CSS pipeline fails with
+  `Cannot find module 'autoprefixer'`. `autoprefixer` is also added as an
+  explicit root `devDependency` — the `resolutions` pin alone was not enough
+  to get yarn to hoist a copy to the root `node_modules`, an explicit
+  top-level dependency was required.
+- `resolutions.react` / `resolutions.react-dom` are pinned to `^18.3.1`
+  (matching what `@vtex/sales-app` needs) and a `postinstall` script removes
+  `packages/discovery/node_modules/react` and `react-dom` after every
+  install. Even with matching resolved versions, yarn classic still
+  installed a second physical copy of React nested under
+  `packages/discovery`, and having two React instances in the same render
+  tree causes cryptic `TypeError: Cannot read properties of null (reading
+  'useEffect')` crashes during Next.js static prerendering (Node's module
+  resolution walks up directories, so removing the nested copy makes it
+  resolve to the single deduped copy at the workspace root instead).
 
 ## Known limitations
 
@@ -117,12 +173,24 @@ this monorepo scenario.
 - **`contentSource.type: "CP"`** is the current official scaffold default;
   its interaction with the legacy VTEX Headless CMS webhook flow
   (`vtexHeadlessCms.webhookUrls`) has not been validated end-to-end.
-- **Not validated against a live VTEX B2B account** — `yarn build` currently fails in the default state: TypeScript and webpack compile successfully, but prerendering `/checkout` fails with HTTP 400 because the `{ACCOUNT_NAME}` placeholder cannot resolve a real backend. Replacing this placeholder with a provisioned VTEX account (per Setup above) is expected to resolve this. The failure does not confirm whether Buyer Portal behaves correctly against a real account — that requires the prerequisites above.
-- **Never commit `secrets.hidden.json` / `secrets.revealed.json`** — both are
-  excluded in `.gitignore`. A sibling reference repo currently has
-  `secrets.hidden.json` tracked in git; do not repeat that mistake here.
-- This template does not include FastCheckout, CMS content, or any
-  account-specific `src/` customization — see "What's NOT included" above.
+- **Not validated against a live VTEX B2B account** — `yarn build` currently
+  fails in the default state: TypeScript and webpack compile successfully,
+  and most pages statically generate, but prerendering one of the
+  account-dependent pages (observed on `/checkout`, `/404`, or `/500`
+  depending on build-worker scheduling) fails with HTTP 400 because the
+  `{ACCOUNT_NAME}` placeholder cannot resolve a real backend. Replacing this
+  placeholder with a provisioned VTEX account (per Setup above) is expected
+  to resolve this. The failure does not confirm whether Buyer Portal or
+  FastCheckout behave correctly against a real account — that requires the
+  prerequisites above.
+- **FastCheckout module is unvalidated against a real account** — it was
+  scaffolded via the official `fsp create` command with no example
+  extension; end-to-end behavior against a provisioned VTEX account has not
+  been tested.
+- **Never commit `secrets.hidden.json` / `secrets.revealed.json`** (inside
+  `packages/discovery`) — both are excluded in that package's `.gitignore`. A
+  sibling reference repo currently has `secrets.hidden.json` tracked in git;
+  do not repeat that mistake here.
 
 ## Docs
 
