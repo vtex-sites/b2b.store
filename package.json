@@ -18,7 +18,7 @@
   "devDependencies": {
     "@vtex/fsp-cli": "0.18.5",
     "@vtex/checkout": "0.16.2",
-    "@faststore/cli": "4.4.0",
+    "@faststore/cli": "4.7.0",
     "@vtex/sales-app": "3.53.7",
     "turbo": "2.10.5",
     "autoprefixer": "^10.4.0"
