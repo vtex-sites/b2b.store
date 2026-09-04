@@ -13,7 +13,7 @@
     "test-plugin:ci": "cypress run --config-file node_modules/@vtex/faststore-plugin-buyer-portal/cypress.config.ts"
   },
   "dependencies": {
-    "@faststore/cli": "^4.4.0",
+    "@faststore/cli": "^4.7.0",
     "@vtex/faststore-plugin-buyer-portal": "^2.0.9",
     "graphql": "^16.11.0",
     "react": "^18.2.0",
