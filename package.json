@@ -16,15 +16,12 @@
     "postinstall": "rm -rf packages/discovery/node_modules/react packages/discovery/node_modules/react-dom"
   },
   "devDependencies": {
-    "@vtex/fsp-cli": "0.18.5",
+    "@vtex/fsp-cli": "1.0.5",
     "@vtex/checkout": "0.16.2",
     "@faststore/cli": "4.4.0",
-    "@vtex/sales-app": "3.53.7",
-    "turbo": "2.10.5",
-    "autoprefixer": "^10.4.0"
+    "turbo": "2.10.5"
   },
   "resolutions": {
-    "autoprefixer": "^10.4.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
