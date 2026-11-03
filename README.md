@@ -94,7 +94,7 @@ behavior.
 
 - VTEX account creation, subdomain (`#traffic`) and License Manager setup
 - Domain migration (`#request-domains-migration`), cache policies (`#traffic`)
-- CDN / unified domain (contact: Gabriel Paladino)
+- CDN / unified domain (handled by the VTEX Traffic team)
 - VTEX Intelligent Search indexing (prerequisite for Buyer Portal, configured
   after the store is running)
 - Card tokenization (`allow-card-tokenization-by-account`,
